@@ -28,10 +28,6 @@ export const AppLayout: React.FC = () => {
     enabled: !!user,
   });
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const navItems = [
     { label: 'Home', path: '/app', icon: Home },
@@ -178,14 +174,7 @@ export const AppLayout: React.FC = () => {
             </button>
           )}
 
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="btn-icon btn-ghost"
-            title="Log Out"
-          >
-            <LogOut size={19} />
-          </button>
+       
         </div>
       </header>
 
