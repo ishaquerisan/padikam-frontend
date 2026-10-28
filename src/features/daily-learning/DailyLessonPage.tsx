@@ -17,6 +17,8 @@ import {
   X,
   HelpCircle,
   RotateCcw,
+  AlertCircle,
+  AlertTriangle,
 } from 'lucide-react';
 
 export const DailyLessonPage: React.FC = () => {
@@ -28,6 +30,7 @@ export const DailyLessonPage: React.FC = () => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isPlayingWordAudio, setIsPlayingWordAudio] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showSkippedModal, setShowSkippedModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Fetch today's lesson (or past lesson if date param provided)
@@ -66,6 +69,12 @@ export const DailyLessonPage: React.FC = () => {
           setCurrentIndex((prev) => prev + 1);
         } else if (updatedLesson.isTargetCompleted) {
           setShowCompletionModal(true);
+        } else {
+          // If on last sentence but earlier sentences were skipped, alert the learner
+          const remainingUnlearned = (updatedLesson.sentences || []).filter((s) => s.status !== 'LEARNED').length;
+          if (remainingUnlearned > 0) {
+            setShowSkippedModal(true);
+          }
         }
       }
     },
@@ -111,6 +120,21 @@ export const DailyLessonPage: React.FC = () => {
 
   const sentences = lesson?.sentences || [];
   const currentSentence = sentences[currentIndex] as DailyLessonItem | undefined;
+
+  // Track skipped / unlearned sentences
+  const unlearnedSentences = sentences
+    .map((s, index) => ({ ...s, index }))
+    .filter((s) => s.status !== 'LEARNED');
+  const unlearnedCount = unlearnedSentences.length;
+  const firstUnlearnedIndex = unlearnedSentences.length > 0 ? unlearnedSentences[0].index : -1;
+
+  const handleReviewGoal = () => {
+    if (lesson?.isTargetCompleted || unlearnedCount === 0) {
+      setShowCompletionModal(true);
+    } else {
+      setShowSkippedModal(true);
+    }
+  };
 
   const handlePlayWordAudio = () => {
     if (!currentSentence?.word) return;
@@ -238,6 +262,111 @@ export const DailyLessonPage: React.FC = () => {
         />
       </div>
 
+      {/* Quick Sentence Navigator Pills (shows learned vs skipped sentences) */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '6px',
+          alignItems: 'center',
+          overflowX: 'auto',
+          padding: '2px 0 6px',
+          scrollbarWidth: 'none',
+        }}
+      >
+        {sentences.map((s, idx) => {
+          const isCurrent = idx === currentIndex;
+          const isLearned = s.status === 'LEARNED';
+          return (
+            <button
+              key={s.id || idx}
+              type="button"
+              onClick={() => setCurrentIndex(idx)}
+              style={{
+                minWidth: '34px',
+                height: '34px',
+                padding: '0 8px',
+                borderRadius: '10px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '3px',
+                cursor: 'pointer',
+                border: isCurrent
+                  ? '2px solid var(--color-primary)'
+                  : isLearned
+                  ? '1px solid #A7F3D0'
+                  : '1px solid var(--color-border)',
+                backgroundColor: isCurrent
+                  ? '#EEF2FF'
+                  : isLearned
+                  ? '#ECFDF5'
+                  : 'var(--color-surface-muted)',
+                color: isCurrent
+                  ? 'var(--color-primary)'
+                  : isLearned
+                  ? '#065F46'
+                  : 'var(--color-text-secondary)',
+                transform: isCurrent ? 'scale(1.08)' : 'none',
+                boxShadow: isCurrent ? '0 2px 6px rgba(79, 70, 229, 0.2)' : 'none',
+                transition: 'all 0.15s ease',
+                flexShrink: 0,
+              }}
+              title={`Sentence ${idx + 1}: ${isLearned ? 'Learned' : 'Not Learned'}`}
+            >
+              {isLearned && <CheckCircle size={12} color="#059669" />}
+              <span>{idx + 1}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Alert banner when reached the end with skipped sentences */}
+      {currentIndex === sentences.length - 1 && unlearnedCount > 0 && (
+        <div
+          style={{
+            backgroundColor: '#FFFBEB',
+            border: '1px solid #FDE68A',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertCircle size={20} color="#D97706" style={{ flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#92400E' }}>
+                {unlearnedCount} Sentence{unlearnedCount > 1 ? 's' : ''} Skipped!
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#B45309' }}>
+                Complete all sentences to finish today's goal and keep your streak.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => setShowSkippedModal(true)}
+            style={{
+              backgroundColor: '#FEF3C7',
+              color: '#B45309',
+              fontWeight: 700,
+              border: '1px solid #FDE68A',
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Review Skipped
+          </button>
+        </div>
+      )}
+
       {/* Main Flashcard */}
       {currentSentence && (
         <div
@@ -251,13 +380,16 @@ export const DailyLessonPage: React.FC = () => {
             justifyContent: 'space-between',
             boxShadow: 'var(--shadow-md)',
             position: 'relative',
-            border: currentSentence.status === 'LEARNED' ? '2px solid #A7F3D0' : '1px solid var(--color-border)',
-            backgroundColor: currentSentence.status === 'LEARNED' ? '#FAFCFB' : '#FFFFFF',
+            border: currentSentence.status === 'LEARNED'
+              ? '2px solid #10B981'
+              : '1px solid var(--color-border)',
+            backgroundColor: '#ffffff',
+            transition: 'border-color 0.2s ease',
           }}
         >
           {/* Top badges & favorite */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
               {currentSentence.category && (
                 <span className="badge" style={{ backgroundColor: 'var(--color-surface-muted)', color: 'var(--color-text-secondary)' }}>
                   {currentSentence.category.name}
@@ -266,6 +398,22 @@ export const DailyLessonPage: React.FC = () => {
               <span className={`badge badge-${currentSentence.difficulty.toLowerCase()}`}>
                 {currentSentence.difficulty}
               </span>
+              {currentSentence.status === 'LEARNED' && (
+                <span
+                  className="badge"
+                  style={{
+                    backgroundColor: '#ECFDF5',
+                    color: '#059669',
+                    border: '1px solid #A7F3D0',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <CheckCircle size={12} />
+                  Learned
+                </span>
+              )}
             </div>
 
             <button
@@ -445,19 +593,23 @@ export const DailyLessonPage: React.FC = () => {
             {currentSentence.status === 'LEARNED' ? (
               <div
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  color: 'var(--color-primary)',
+                  color: '#059669',
                   fontWeight: 700,
                   fontSize: '0.9rem',
+                  backgroundColor: '#ECFDF5',
+                  padding: '6px 16px',
+                  borderRadius: 'var(--radius-full)',
+                  border: '1px solid #A7F3D0',
                 }}
               >
                 <CheckCircle size={18} />
-                <span>Learned</span>
+                <span>Marked as Learned</span>
               </div>
             ) : (
-              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+              <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
                 Tap 'Mark as Learned' when ready
               </span>
             )}
@@ -478,29 +630,59 @@ export const DailyLessonPage: React.FC = () => {
         </button>
 
         {!isPastLesson && currentSentence?.status !== 'LEARNED' ? (
-          <button
-            onClick={handleMarkLearned}
-            disabled={markLearnedMutation.isPending}
-            className="btn btn-primary btn-block btn-lg"
-            style={{ flex: 1 }}
-          >
-            <CheckCircle size={20} />
-            <span>{markLearnedMutation.isPending ? 'Saving...' : 'Mark as Learned'}</span>
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+            <button
+              onClick={handleMarkLearned}
+              disabled={markLearnedMutation.isPending}
+              className="btn btn-primary btn-lg"
+              style={{ flex: 1 }}
+            >
+              <CheckCircle size={20} />
+              <span>{markLearnedMutation.isPending ? 'Saving...' : 'Mark as Learned'}</span>
+            </button>
+
+            {currentIndex === sentences.length - 1 && (
+              <button
+                type="button"
+                onClick={handleReviewGoal}
+                className="btn btn-secondary btn-lg"
+                style={{
+                  padding: '0 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                }}
+                title="Review Goal"
+              >
+                <span>Review Goal</span>
+              </button>
+            )}
+          </div>
         ) : (
           <button
             onClick={() => {
               if (currentIndex < sentences.length - 1) {
                 setCurrentIndex((prev) => prev + 1);
-              } else if (lesson.isTargetCompleted) {
-                setShowCompletionModal(true);
+              } else {
+                handleReviewGoal();
               }
             }}
             className="btn btn-primary btn-block btn-lg"
             style={{ flex: 1 }}
           >
-            <span>{currentIndex < sentences.length - 1 ? 'Next Sentence' : 'Review Goal'}</span>
-            <ChevronRight size={20} />
+            {currentIndex < sentences.length - 1 ? (
+              <>
+                <span>Next Sentence</span>
+                <ChevronRight size={20} />
+              </>
+            ) : (
+              <>
+                <span>Review Goal</span>
+                <Sparkles size={20} />
+              </>
+            )}
           </button>
         )}
 
@@ -627,6 +809,165 @@ export const DailyLessonPage: React.FC = () => {
                 className="btn btn-ghost btn-block"
               >
                 Return to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          Skipped Sentences Alert Modal (Shows when sentences skipped)
+         ======================================================== */}
+      {showSkippedModal && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '480px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowSkippedModal(false)}
+                className="btn-icon btn-ghost"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FEF3C7',
+                  color: '#D97706',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '14px',
+                  border: '2px solid #FDE68A',
+                }}
+              >
+                <AlertCircle size={32} />
+              </div>
+
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-main)' }}>
+                Some Sentences Were Skipped!
+              </h2>
+              <p style={{ color: 'var(--color-text-secondary)', marginTop: '8px', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                You have learned <strong>{lesson.learnedCount} of {lesson.targetCount}</strong> sentences. You still have <strong>{unlearnedCount} skipped sentence{unlearnedCount > 1 ? 's' : ''}</strong> that must be marked as learned to complete today's goal.
+              </p>
+            </div>
+
+            {/* List of skipped sentences */}
+            <div style={{ marginBottom: '20px' }}>
+              <div
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'var(--color-text-muted)',
+                  letterSpacing: '0.04em',
+                  marginBottom: '8px',
+                }}
+              >
+                Skipped Sentences ({unlearnedCount})
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  maxHeight: '220px',
+                  overflowY: 'auto',
+                  paddingRight: '4px',
+                }}
+              >
+                {unlearnedSentences.map((item) => (
+                  <div
+                    key={item.id || item.index}
+                    onClick={() => {
+                      setCurrentIndex(item.index);
+                      setShowSkippedModal(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      backgroundColor: '#FFFBEB',
+                      border: '1px solid #FDE68A',
+                      borderRadius: 'var(--radius-md)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                    className="card-interactive"
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#B45309' }}>
+                          Sentence {item.index + 1}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.7rem',
+                            backgroundColor: '#FEF2F2',
+                            color: '#DC2626',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          Not Learned
+                        </span>
+                      </div>
+                      <div style={{ fontWeight: 750, fontSize: '0.92rem', color: 'var(--color-text-main)', marginTop: '3px' }}>
+                        {item.word}{' '}
+                        <span className="font-ml" style={{ fontWeight: 600, color: 'var(--color-primary-dark)', fontSize: '0.82rem' }}>
+                          ({item.wordMeaning})
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      style={{
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#ffffff',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      Go to Sentence
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {firstUnlearnedIndex !== -1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentIndex(firstUnlearnedIndex);
+                    setShowSkippedModal(false);
+                  }}
+                  className="btn btn-primary btn-block"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <RotateCcw size={16} />
+                  <span>Go to Sentence {firstUnlearnedIndex + 1}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowSkippedModal(false)}
+                className="btn btn-ghost btn-block"
+              >
+                Close & Continue Reviewing
               </button>
             </div>
           </div>
