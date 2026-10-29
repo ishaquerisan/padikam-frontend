@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { apiClient } from '@/services/api/client';
 import { User } from '@/types';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   User as UserIcon,
   Lock,
@@ -26,10 +27,13 @@ import { useNavigate } from 'react-router-dom';
 export const ProfilePage: React.FC = () => {
   const { user, updateUser, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Session & logout state
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+
 
   // Profile edit state
   const [name, setName] = useState(user?.name || '');
@@ -49,6 +53,8 @@ export const ProfilePage: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const isGoogleAccount = user?.auth_provider === 'google';
+
+
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -393,7 +399,6 @@ export const ProfilePage: React.FC = () => {
           </button>
         </div>
       </div>
-
       {/* Section 1: Edit Profile Name */}
       <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>

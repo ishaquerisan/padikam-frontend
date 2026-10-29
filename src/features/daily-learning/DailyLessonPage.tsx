@@ -193,6 +193,56 @@ export const DailyLessonPage: React.FC = () => {
   }
 
   if (error || !lesson || sentences.length === 0) {
+    const errorMsg = (error as any)?.message || '';
+    const isCompletedAll = errorMsg.toLowerCase().includes('completed all sentences') || errorMsg.includes('based on your selected categories');
+
+    if (isCompletedAll) {
+      return (
+        <div className="card" style={{ textAlign: 'center', padding: '48px 24px', margin: '40px auto', maxWidth: '520px', borderRadius: '24px' }}>
+          <div
+            style={{
+              width: '72px',
+              height: '72px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(147, 51, 234, 0.15))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              boxShadow: '0 8px 20px rgba(99, 102, 241, 0.15)',
+            }}
+          >
+            <Sparkles size={38} color="var(--color-primary)" />
+          </div>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '8px' }}>
+            All Sentences Completed! 🎉
+          </h2>
+          <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)', marginBottom: '12px' }}>
+            നിങ്ങൾ തിരഞ്ഞെടുത്ത വിഷയങ്ങളിലെ എല്ലാ വാക്യങ്ങളും പഠിച്ചു കഴിഞ്ഞു!
+          </p>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', lineHeight: 1.5, margin: '0 auto 28px', maxWidth: '420px' }}>
+            {errorMsg || 'You have completed all sentences based on your selected categories! Please select more categories in preferences to continue learning.'}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              onClick={() => navigate('/app/preferences')}
+              className="btn btn-primary"
+              style={{ padding: '14px 24px', fontSize: '1rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              Explore More Categories <ArrowRight size={18} style={{ marginLeft: '8px' }} />
+            </button>
+            <button
+              onClick={() => navigate('/app/dashboard')}
+              className="btn btn-secondary"
+              style={{ padding: '12px 24px' }}
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="card" style={{ textAlign: 'center', padding: '40px 20px', margin: '40px auto', maxWidth: '480px' }}>
         <HelpCircle size={48} color="var(--color-primary)" style={{ margin: '0 auto 16px' }} />
@@ -236,6 +286,14 @@ export const DailyLessonPage: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {lesson.difficultyLevel && (
+            <span
+              className={`badge badge-${lesson.difficultyLevel.toLowerCase()}`}
+              style={{ fontWeight: 800 }}
+            >
+              {lesson.difficultyLevel}
+            </span>
+          )}
           <span className="badge badge-success">
             {lesson.learnedCount} / {lesson.targetCount} Learned
           </span>

@@ -6,6 +6,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  difficulty_level?: SentenceDifficulty;
   status: UserStatus;
   createdAt: string;
   avatar_url?: string;
@@ -18,6 +19,7 @@ export interface UserSettings {
   id: number;
   user_id: number;
   daily_target: number;
+  difficulty_level?: SentenceDifficulty;
   timezone: string;
   notifications_enabled: boolean;
 }
@@ -77,6 +79,7 @@ export interface DailyLesson {
   date: string;
   status: 'IN_PROGRESS' | 'COMPLETED';
   targetCount: number;
+  difficultyLevel?: SentenceDifficulty;
   totalAssigned: number;
   learnedCount: number;
   remainingCount: number;

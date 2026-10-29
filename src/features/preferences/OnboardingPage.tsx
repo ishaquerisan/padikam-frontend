@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/client';
-import { Category } from '@/types';
-import { Check, Sparkles, ArrowRight, Target } from 'lucide-react';
+import { Category, SentenceDifficulty } from '@/types';
+import { useAuth } from '@/app/providers/AuthProvider';
+import { Check, Sparkles, ArrowRight, Target, Award, Compass, Zap } from 'lucide-react';
 
 export const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user, updateUser } = useAuth();
 
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([1, 2, 7, 10]);
+  const [difficultyLevel, setDifficultyLevel] = useState<SentenceDifficulty>('BEGINNER');
   const [dailyTarget, setDailyTarget] = useState<number>(5);
-  const [step, setStep] = useState<'categories' | 'target'>('categories');
+  const [step, setStep] = useState<'categories' | 'difficulty' | 'target'>('categories');
 
   // Fetch categories from backend
   const { data: categories = [], isLoading } = useQuery<Category[]>({
@@ -31,7 +34,28 @@ export const OnboardingPage: React.FC = () => {
   const savePreferencesMutation = useMutation({
     mutationFn: async () => {
       await apiClient.put('/user-categories', { category_ids: selectedCategoryIds });
-      await apiClient.put('/user-settings', { daily_target: dailyTarget });
+      await apiClient.put('/user-settings', {
+        daily_target: dailyTarget,
+        difficulty_level: difficultyLevel,
+      });
+
+      if (user) {
+        updateUser({
+          ...user,
+          difficulty_level: difficultyLevel,
+          settings: {
+            ...(user.settings || {
+              id: 0,
+              user_id: user.id,
+              daily_target: dailyTarget,
+              timezone: 'Asia/Kolkata',
+              notifications_enabled: true,
+            }),
+            daily_target: dailyTarget,
+            difficulty_level: difficultyLevel,
+          },
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-categories'] });
@@ -53,8 +77,8 @@ export const OnboardingPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
           <div
             style={{
-              width: '28px',
-              height: '28px',
+              width: '32px',
+              height: '32px',
               borderRadius: '50%',
               backgroundColor: 'var(--color-primary)',
               color: '#fff',
@@ -62,16 +86,45 @@ export const OnboardingPage: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.9rem',
             }}
           >
             1
           </div>
-          <div style={{ width: '40px', height: '3px', backgroundColor: step === 'target' ? 'var(--color-primary)' : 'var(--color-border)' }} />
           <div
             style={{
-              width: '28px',
-              height: '28px',
+              width: '36px',
+              height: '3px',
+              backgroundColor: step === 'difficulty' || step === 'target' ? 'var(--color-primary)' : 'var(--color-border)',
+            }}
+          />
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: step === 'difficulty' || step === 'target' ? 'var(--color-primary)' : 'var(--color-surface-hover)',
+              color: step === 'difficulty' || step === 'target' ? '#fff' : 'var(--color-text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+            }}
+          >
+            2
+          </div>
+          <div
+            style={{
+              width: '36px',
+              height: '3px',
+              backgroundColor: step === 'target' ? 'var(--color-primary)' : 'var(--color-border)',
+            }}
+          />
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
               borderRadius: '50%',
               backgroundColor: step === 'target' ? 'var(--color-primary)' : 'var(--color-surface-hover)',
               color: step === 'target' ? '#fff' : 'var(--color-text-muted)',
@@ -79,17 +132,21 @@ export const OnboardingPage: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.9rem',
             }}
           >
-            2
+            3
           </div>
         </div>
 
-        {step === 'categories' ? (
+        {/* STEP 1: CATEGORIES */}
+        {step === 'categories' && (
           <div>
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <h1 style={{ fontSize: '1.6rem', fontWeight: 800 }}>Choose Topics You Love</h1>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Step 1 of 3
+              </span>
+              <h1 style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '4px' }}>Choose Topics You Love</h1>
               <p className="font-ml" style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                 നിങ്ങൾക്ക് താല്പര്യമുള്ള വിഷയങ്ങൾ തിരഞ്ഞെടുക്കൂ
               </p>
@@ -127,6 +184,8 @@ export const OnboardingPage: React.FC = () => {
                         justifyContent: 'space-between',
                         border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                         backgroundColor: isSelected ? 'var(--color-primary-subtle)' : 'var(--color-surface)',
+                        cursor: 'pointer',
+                        borderRadius: 'var(--radius-lg)',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -160,23 +219,155 @@ export const OnboardingPage: React.FC = () => {
             )}
 
             <button
-              onClick={() => setStep('target')}
+              onClick={() => setStep('difficulty')}
               className="btn btn-primary btn-block btn-lg"
               disabled={selectedCategoryIds.length === 0}
             >
-              <span>Continue to Daily Target</span>
+              <span>Continue to Difficulty Level</span>
               <ArrowRight size={20} />
             </button>
           </div>
-        ) : (
+        )}
+
+        {/* STEP 2: DIFFICULTY LEVEL */}
+        {step === 'difficulty' && (
+          <div>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Step 2 of 3
+              </span>
+              <h1 style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '4px' }}>Choose Your Learning Level</h1>
+              <p className="font-ml" style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                നിങ്ങളുടെ പഠന നിലവാരം തിരഞ്ഞെടുക്കൂ
+              </p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                All users start as Beginner by default. You can choose a different level now or anytime in settings.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '32px' }}>
+              {[
+                {
+                  level: 'BEGINNER' as SentenceDifficulty,
+                  title: 'Beginner (തുടക്കക്കാർ)',
+                  badge: 'Default / Recommended',
+                  badgeColor: '#059669',
+                  badgeBg: '#ECFDF5',
+                  desc: 'Everyday vocabulary, simple sentence construction, and daily communication fundamentals.',
+                  examples: 'eat, water, help, clean, friend, school',
+                },
+                {
+                  level: 'INTERMEDIATE' as SentenceDifficulty,
+                  title: 'Intermediate (ഇടത്തരം)',
+                  badge: 'Conversational',
+                  badgeColor: '#D97706',
+                  badgeBg: '#FFFBEB',
+                  desc: 'Conversational fluency, office & workplace phrases, travel discussions and compound sentences.',
+                  examples: 'punctuality, initiative, feedback, policy, commute',
+                },
+                {
+                  level: 'ADVANCED' as SentenceDifficulty,
+                  title: 'Advanced (വിദഗ്ദ്ധർ)',
+                  badge: 'Professional',
+                  badgeColor: '#4F46E5',
+                  badgeBg: '#EEF2FF',
+                  desc: 'Rich vocabulary, complex grammar nuances, professional debates, idioms and advanced expressions.',
+                  examples: 'feasibility, comprehensive, mitigation, consensus',
+                },
+              ].map((item) => {
+                const isSelected = difficultyLevel === item.level;
+                return (
+                  <div
+                    key={item.level}
+                    onClick={() => setDifficultyLevel(item.level)}
+                    className="card card-interactive"
+                    style={{
+                      padding: '20px',
+                      borderRadius: 'var(--radius-lg)',
+                      border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                      backgroundColor: isSelected ? 'var(--color-primary-subtle)' : 'var(--color-surface)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--color-text-main)' }}>
+                          {item.title}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '999px',
+                            color: item.badgeColor,
+                            backgroundColor: item.badgeBg,
+                          }}
+                        >
+                          {item.badge}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          border: isSelected ? 'none' : '2px solid var(--color-border)',
+                          backgroundColor: isSelected ? 'var(--color-primary)' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#fff',
+                        }}
+                      >
+                        {isSelected && <Check size={14} strokeWidth={3} />}
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: '4px 0 8px', lineHeight: 1.45 }}>
+                      {item.desc}
+                    </p>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                      <strong>Examples:</strong> {item.examples}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setStep('categories')}
+                className="btn btn-secondary btn-lg"
+                style={{ flex: 1 }}
+              >
+                Back
+              </button>
+              <button
+                onClick={() => setStep('target')}
+                className="btn btn-primary btn-lg"
+                style={{ flex: 2 }}
+              >
+                <span>Continue to Daily Target</span>
+                <ArrowRight size={20} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: DAILY TARGET */}
+        {step === 'target' && (
           <div>
             <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-              <h1 style={{ fontSize: '1.6rem', fontWeight: 800 }}>Set Your Daily Goal</h1>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Step 3 of 3
+              </span>
+              <h1 style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '4px' }}>Set Your Daily Goal</h1>
               <p className="font-ml" style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                 ദിവസവും എത്ര വാക്യങ്ങൾ പഠിക്കണം?
               </p>
               <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                Consistency beats intensity. You can always change this later.
+                Consistency beats intensity. You can always change this later in settings.
               </p>
             </div>
 
@@ -198,8 +389,10 @@ export const OnboardingPage: React.FC = () => {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '20px',
+                      borderRadius: 'var(--radius-lg)',
                       border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                       backgroundColor: isSelected ? 'var(--color-primary-subtle)' : 'var(--color-surface)',
+                      cursor: 'pointer',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -236,7 +429,7 @@ export const OnboardingPage: React.FC = () => {
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
-                onClick={() => setStep('categories')}
+                onClick={() => setStep('difficulty')}
                 className="btn btn-secondary btn-lg"
                 style={{ flex: 1 }}
               >

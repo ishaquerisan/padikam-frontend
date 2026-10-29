@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/client';
-import { Category, UserSettings } from '@/types';
-import { Check, Save, Target, FolderTree, Bell, AlertCircle } from 'lucide-react';
+import { Category, UserSettings, SentenceDifficulty } from '@/types';
+import { useAuth } from '@/app/providers/AuthProvider';
+import { Check, Save, Target, FolderTree, Bell, AlertCircle, GraduationCap } from 'lucide-react';
 
 export const PreferencesPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user, updateUser } = useAuth();
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [dailyTarget, setDailyTarget] = useState<number>(5);
+  const [difficultyLevel, setDifficultyLevel] = useState<SentenceDifficulty>('BEGINNER');
+  const [isSavingDifficulty, setIsSavingDifficulty] = useState(false);
+  const [difficultySavedMessage, setDifficultySavedMessage] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<boolean>(true);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -35,15 +40,60 @@ export const PreferencesPage: React.FC = () => {
   useEffect(() => {
     if (userCategories.length > 0) {
       setSelectedCategoryIds(userCategories.map((c) => c.id));
+    } else if (allCategories.length > 0 && selectedCategoryIds.length === 0) {
+      setSelectedCategoryIds(allCategories.map((c) => c.id));
     }
-  }, [userCategories]);
+  }, [userCategories, allCategories]);
 
   useEffect(() => {
     if (userSettings) {
       setDailyTarget(userSettings.daily_target);
+      if (userSettings.difficulty_level) {
+        setDifficultyLevel(userSettings.difficulty_level);
+      }
       setNotifications(userSettings.notifications_enabled);
+    } else if (user?.difficulty_level) {
+      setDifficultyLevel(user.difficulty_level);
     }
-  }, [userSettings]);
+  }, [userSettings, user]);
+
+  const handleSelectAndSaveDifficulty = async (level: SentenceDifficulty) => {
+    setDifficultyLevel(level);
+    setIsSavingDifficulty(true);
+    setDifficultySavedMessage(null);
+    setErrorMessage(null);
+
+    try {
+      await apiClient.put('/user-settings', {
+        daily_target: dailyTarget,
+        difficulty_level: level,
+        notifications_enabled: notifications,
+      });
+
+      if (user) {
+        updateUser({
+          ...user,
+          difficulty_level: level,
+          settings: {
+            ...(user.settings || { id: 0, user_id: user.id, daily_target: dailyTarget, timezone: 'Asia/Kolkata', notifications_enabled: notifications }),
+            difficulty_level: level,
+          },
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['user-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['lesson'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+
+      setDifficultySavedMessage(`Difficulty level saved as ${level}!`);
+      setTimeout(() => setDifficultySavedMessage(null), 4000);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to update difficulty level. Please try again.');
+      setTimeout(() => setErrorMessage(null), 4000);
+    } finally {
+      setIsSavingDifficulty(false);
+    }
+  };
 
   const toggleCategory = (id: number) => {
     if (selectedCategoryIds.includes(id)) {
@@ -56,21 +106,33 @@ export const PreferencesPage: React.FC = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiClient.put('/user-categories', { category_ids: selectedCategoryIds });
+      if (selectedCategoryIds.length > 0) {
+        await apiClient.put('/user-categories', { category_ids: selectedCategoryIds });
+      }
       await apiClient.put('/user-settings', {
         daily_target: dailyTarget,
+        difficulty_level: difficultyLevel,
         notifications_enabled: notifications,
       });
+
+      if (user) {
+        updateUser({
+          ...user,
+          difficulty_level: difficultyLevel,
+          settings: {
+            ...(user.settings || { id: 0, user_id: user.id, daily_target: dailyTarget, timezone: 'Asia/Kolkata', notifications_enabled: notifications }),
+            difficulty_level: difficultyLevel,
+          },
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-categories'] });
       queryClient.invalidateQueries({ queryKey: ['user-settings'] });
       queryClient.invalidateQueries({ queryKey: ['lesson'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
-      setSuccessMessage('Preferences updated successfully! Redirecting to home...');
-      setTimeout(() => {
-        navigate('/app');
-      }, 600);
+      setSuccessMessage('Preferences updated successfully!');
+      setTimeout(() => setSuccessMessage(null), 4000);
     },
     onError: (err: any) => {
       setErrorMessage(err?.message || 'Failed to save preferences. Please try again.');
@@ -170,6 +232,154 @@ export const PreferencesPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Difficulty Level Setting */}
+      <div className="card" style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <GraduationCap size={22} color="var(--color-primary)" />
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>Learning Difficulty Level</h2>
+          </div>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '16px' }}>
+          All new users start at Beginner level by default. Choose your preferred level for daily lesson sentences.
+        </p>
+
+        {difficultySavedMessage && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 14px',
+              backgroundColor: '#ECFDF5',
+              color: '#065F46',
+              border: '1px solid #A7F3D0',
+              borderRadius: 'var(--radius-md)',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              marginBottom: '16px',
+            }}
+          >
+            <Check size={16} />
+            <span>{difficultySavedMessage}</span>
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+          {/* Beginner */}
+          <div
+            onClick={() => handleSelectAndSaveDifficulty('BEGINNER')}
+            style={{
+              padding: '16px',
+              borderRadius: 'var(--radius-lg)',
+              border: difficultyLevel === 'BEGINNER' ? '2px solid #059669' : '1px solid var(--color-border)',
+              backgroundColor: difficultyLevel === 'BEGINNER' ? '#ECFDF5' : 'var(--color-surface)',
+              cursor: isSavingDifficulty ? 'wait' : 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+            className="card-interactive"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="badge badge-beginner">BEGINNER</span>
+              {difficultyLevel === 'BEGINNER' ? (
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#059669', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Check size={12} />
+                </div>
+              ) : (
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Default</span>
+              )}
+            </div>
+            <div style={{ fontWeight: 750, fontSize: '0.95rem', color: 'var(--color-text-main)' }}>Beginner</div>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+              Basic daily sentences & everyday vocabulary.
+            </span>
+            <span className="font-ml" style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>
+              ലളിതമായ ദൈനംദിന വാക്യങ്ങൾ
+            </span>
+          </div>
+
+          {/* Intermediate */}
+          <div
+            onClick={() => handleSelectAndSaveDifficulty('INTERMEDIATE')}
+            style={{
+              padding: '16px',
+              borderRadius: 'var(--radius-lg)',
+              border: difficultyLevel === 'INTERMEDIATE' ? '2px solid #D97706' : '1px solid var(--color-border)',
+              backgroundColor: difficultyLevel === 'INTERMEDIATE' ? '#FFFBEB' : 'var(--color-surface)',
+              cursor: isSavingDifficulty ? 'wait' : 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+            className="card-interactive"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="badge badge-intermediate">INTERMEDIATE</span>
+              {difficultyLevel === 'INTERMEDIATE' && (
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#D97706', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Check size={12} />
+                </div>
+              )}
+            </div>
+            <div style={{ fontWeight: 750, fontSize: '0.95rem', color: 'var(--color-text-main)' }}>Intermediate</div>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+              Conversational dialogues, travel & workplace phrases.
+            </span>
+            <span className="font-ml" style={{ fontSize: '0.75rem', color: '#B45309', fontWeight: 600 }}>
+              ഓഫീസ്, യാത്രാ സംഭാഷണങ്ങൾ
+            </span>
+          </div>
+
+          {/* Advanced */}
+          <div
+            onClick={() => handleSelectAndSaveDifficulty('ADVANCED')}
+            style={{
+              padding: '16px',
+              borderRadius: 'var(--radius-lg)',
+              border: difficultyLevel === 'ADVANCED' ? '2px solid #4F46E5' : '1px solid var(--color-border)',
+              backgroundColor: difficultyLevel === 'ADVANCED' ? '#EEF2FF' : 'var(--color-surface)',
+              cursor: isSavingDifficulty ? 'wait' : 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+            className="card-interactive"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="badge badge-advanced">ADVANCED</span>
+              {difficultyLevel === 'ADVANCED' && (
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#4F46E5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Check size={12} />
+                </div>
+              )}
+            </div>
+            <div style={{ fontWeight: 750, fontSize: '0.95rem', color: 'var(--color-text-main)' }}>Advanced</div>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
+              Nuanced expressions & professional English.
+            </span>
+            <span className="font-ml" style={{ fontSize: '0.75rem', color: '#4338CA', fontWeight: 600 }}>
+              ഉന്നതവും ഔദ്യോഗികവുമായ ഇംഗ്ലീഷ്
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+            Selected Level: <strong style={{ color: 'var(--color-text-main)' }}>{difficultyLevel}</strong>. Tap any tier to update instantly.
+          </span>
+          {isSavingDifficulty && (
+            <span style={{ fontSize: '0.82rem', color: 'var(--color-primary)', fontWeight: 600 }}>
+              Saving and updating today's lesson...
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Category Selection */}
       <div className="card" style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
@@ -258,7 +468,7 @@ export const PreferencesPage: React.FC = () => {
         type="button"
         onClick={() => saveMutation.mutate()}
         className="btn btn-primary btn-block btn-lg"
-        disabled={saveMutation.isPending || selectedCategoryIds.length === 0}
+        disabled={saveMutation.isPending}
       >
         <Save size={20} />
         <span>{saveMutation.isPending ? 'Saving Preferences...' : 'Save Preferences'}</span>
