@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/client';
@@ -13,12 +13,12 @@ import {
   CheckCircle,
   Sparkles,
   ArrowRight,
-  TrendingUp,
   X,
   HelpCircle,
   RotateCcw,
   AlertCircle,
-  AlertTriangle,
+  Lightbulb,
+  Languages,
 } from 'lucide-react';
 
 export const DailyLessonPage: React.FC = () => {
@@ -161,12 +161,13 @@ export const DailyLessonPage: React.FC = () => {
         <span
           key={idx}
           style={{
-            backgroundColor: '#EEF2FF',
-            color: 'var(--color-primary)',
-            padding: '2px 6px',
+            backgroundColor: '#DCFCE7',
+            color: '#047857',
+            padding: '2px 8px',
             borderRadius: '6px',
             fontWeight: 800,
-            borderBottom: '2px solid var(--color-primary)',
+            borderBottom: '2px solid #059669',
+            display: 'inline-block',
           }}
         >
           {part}
@@ -182,12 +183,40 @@ export const DailyLessonPage: React.FC = () => {
     markLearnedMutation.mutate(currentSentence.sentenceId);
   };
 
+  // Helper for difficulty badge styling according to design specs
+  const getDifficultyBadgeStyle = (difficulty?: string) => {
+    const d = (difficulty || '').toUpperCase();
+    if (d === 'ADVANCED') {
+      return {
+        backgroundColor: '#FCE7F3', // light pink background
+        color: '#9D174D',           // dark pink text
+        border: '1px solid #FBCFE8',
+      };
+    }
+    if (d === 'INTERMEDIATE') {
+      return {
+        backgroundColor: '#FEF3C7', // soft amber background
+        color: '#B45309',           // dark amber text
+        border: '1px solid #FDE68A',
+      };
+    }
+    return {
+      backgroundColor: '#ECFDF5',   // light green background
+      color: '#047857',             // dark green text
+      border: '1px solid #A7F3D0',
+    };
+  };
+
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingTop: '20px' }}>
-        <div className="skeleton" style={{ height: '30px', width: '40%' }} />
-        <div className="skeleton" style={{ height: '360px', width: '100%', borderRadius: '24px' }} />
-        <div className="skeleton" style={{ height: '56px', width: '100%' }} />
+      <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingTop: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="skeleton" style={{ height: '24px', width: '180px', borderRadius: '8px' }} />
+          <div className="skeleton" style={{ height: '24px', width: '90px', borderRadius: '9999px' }} />
+        </div>
+        <div className="skeleton" style={{ height: '8px', width: '100%', borderRadius: '9999px' }} />
+        <div className="skeleton" style={{ height: '400px', width: '100%', borderRadius: '24px' }} />
+        <div className="skeleton" style={{ height: '54px', width: '100%', borderRadius: '14px' }} />
       </div>
     );
   }
@@ -198,45 +227,66 @@ export const DailyLessonPage: React.FC = () => {
 
     if (isCompletedAll) {
       return (
-        <div className="card" style={{ textAlign: 'center', padding: '48px 24px', margin: '40px auto', maxWidth: '520px', borderRadius: '24px' }}>
+        <div
+          className="card"
+          style={{
+            textAlign: 'center',
+            padding: '48px 24px',
+            margin: '40px auto',
+            maxWidth: '520px',
+            borderRadius: '24px',
+            border: '1px solid #E2E8F0',
+            backgroundColor: '#FFFFFF',
+            boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.05)',
+          }}
+        >
           <div
             style={{
               width: '72px',
               height: '72px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(147, 51, 234, 0.15))',
+              background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.12), rgba(16, 185, 129, 0.18))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 20px',
-              boxShadow: '0 8px 20px rgba(99, 102, 241, 0.15)',
+              boxShadow: '0 8px 20px rgba(5, 150, 105, 0.15)',
             }}
           >
-            <Sparkles size={38} color="var(--color-primary)" />
+            <Sparkles size={38} color="#059669" />
           </div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '8px', color: '#0F172A' }}>
             All Sentences Completed! 🎉
           </h2>
-          <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-primary)', marginBottom: '12px' }}>
+          <p style={{ fontSize: '1rem', fontWeight: 600, color: '#059669', marginBottom: '12px' }}>
             നിങ്ങൾ തിരഞ്ഞെടുത്ത വിഷയങ്ങളിലെ എല്ലാ വാക്യങ്ങളും പഠിച്ചു കഴിഞ്ഞു!
           </p>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', lineHeight: 1.5, margin: '0 auto 28px', maxWidth: '420px' }}>
+          <p style={{ color: '#64748B', fontSize: '0.95rem', lineHeight: 1.5, margin: '0 auto 28px', maxWidth: '420px' }}>
             {errorMsg || 'You have completed all sentences based on your selected categories! Please select more categories in preferences to continue learning.'}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button
               onClick={() => navigate('/app/preferences')}
               className="btn btn-primary"
-              style={{ padding: '14px 24px', fontSize: '1rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{
+                backgroundColor: '#059669',
+                padding: '14px 24px',
+                fontSize: '1rem',
+                fontWeight: 700,
+                borderRadius: '14px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               Explore More Categories <ArrowRight size={18} style={{ marginLeft: '8px' }} />
             </button>
             <button
-              onClick={() => navigate('/app/dashboard')}
+              onClick={() => navigate('/app')}
               className="btn btn-secondary"
-              style={{ padding: '12px 24px' }}
+              style={{ padding: '12px 24px', borderRadius: '14px' }}
             >
-              Back to Dashboard
+              Back to Home
             </button>
           </div>
         </div>
@@ -244,18 +294,36 @@ export const DailyLessonPage: React.FC = () => {
     }
 
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '40px 20px', margin: '40px auto', maxWidth: '480px' }}>
-        <HelpCircle size={48} color="var(--color-primary)" style={{ margin: '0 auto 16px' }} />
-        <h2>No Sentences Found</h2>
-        <p style={{ color: 'var(--color-text-secondary)', margin: '12px 0 24px' }}>
+      <div
+        className="card"
+        style={{
+          textAlign: 'center',
+          padding: '40px 20px',
+          margin: '40px auto',
+          maxWidth: '480px',
+          borderRadius: '24px',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+        }}
+      >
+        <HelpCircle size={48} color="#059669" style={{ margin: '0 auto 16px' }} />
+        <h2 style={{ color: '#0F172A', fontWeight: 800, fontSize: '1.3rem' }}>No Sentences Found</h2>
+        <p style={{ color: '#64748B', margin: '12px 0 24px', fontSize: '0.92rem' }}>
           {(error as any)?.message || 'Please ensure you have selected active categories in your preferences.'}
         </p>
-        <button onClick={() => navigate('/app/preferences')} className="btn btn-primary">
+        <button
+          onClick={() => navigate('/app/preferences')}
+          className="btn btn-primary"
+          style={{ backgroundColor: '#059669', borderRadius: '12px', fontWeight: 700 }}
+        >
           Adjust Learning Topics
         </button>
       </div>
     );
   }
+
+  const activeLevel = (currentSentence?.difficulty || lesson.difficultyLevel || 'BEGINNER').toUpperCase();
+  const diffBadgeStyle = getDifficultyBadgeStyle(activeLevel);
 
   return (
     <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -265,119 +333,171 @@ export const DailyLessonPage: React.FC = () => {
             backgroundColor: '#FEE2E2',
             color: '#B91C1C',
             padding: '12px 16px',
-            borderRadius: 'var(--radius-md)',
+            borderRadius: '12px',
             fontWeight: 600,
             fontSize: '0.9rem',
+            border: '1px solid #FECACA',
           }}
         >
           {errorMessage}
         </div>
       )}
 
-      {/* Header bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-            {isPastLesson ? `Lesson Date: ${lesson.date}` : "Today's Daily Lesson"}
-          </span>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
-            Sentence {currentIndex + 1} of {sentences.length}
-          </h1>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {lesson.difficultyLevel && (
-            <span
-              className={`badge badge-${lesson.difficultyLevel.toLowerCase()}`}
-              style={{ fontWeight: 800 }}
-            >
-              {lesson.difficultyLevel}
-            </span>
-          )}
-          <span className="badge badge-success">
-            {lesson.learnedCount} / {lesson.targetCount} Learned
-          </span>
-        </div>
-      </div>
-
-      {/* Progress line */}
-      <div
-        style={{
-          height: '6px',
-          backgroundColor: 'var(--color-surface-hover)',
-          borderRadius: 'var(--radius-full)',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            height: '100%',
-            width: `${((currentIndex + 1) / sentences.length) * 100}%`,
-            backgroundColor: 'var(--color-primary)',
-            borderRadius: 'var(--radius-full)',
-            transition: 'width 0.3s ease',
-          }}
-        />
-      </div>
-
-      {/* Quick Sentence Navigator Pills (shows learned vs skipped sentences) */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '6px',
-          alignItems: 'center',
-          overflowX: 'auto',
-          padding: '2px 0 6px',
-          scrollbarWidth: 'none',
-        }}
-      >
-        {sentences.map((s, idx) => {
-          const isCurrent = idx === currentIndex;
-          const isLearned = s.status === 'LEARNED';
-          return (
-            <button
-              key={s.id || idx}
-              type="button"
-              onClick={() => setCurrentIndex(idx)}
+      {/* ========================================================
+          5. Daily Lesson Progress Section
+         ======================================================== */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Top Header Row with Title & Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <div
               style={{
-                minWidth: '34px',
-                height: '34px',
-                padding: '0 8px',
-                borderRadius: '10px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                color: '#059669',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                marginBottom: '2px',
+              }}
+            >
+              {isPastLesson ? `LESSON DATE: ${lesson.date}` : "TODAY'S DAILY LESSON"}
+            </div>
+            <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.25 }}>
+              Sentence {currentIndex + 1} of {sentences.length}
+            </h1>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Level Badge */}
+            <span
+              style={{
+                ...diffBadgeStyle,
+                padding: '4px 12px',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {activeLevel}
+            </span>
+
+            {/* Learned Counter Badge */}
+            <span
+              style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '3px',
-                cursor: 'pointer',
-                border: isCurrent
-                  ? '2px solid var(--color-primary)'
-                  : isLearned
-                  ? '1px solid #A7F3D0'
-                  : '1px solid var(--color-border)',
-                backgroundColor: isCurrent
-                  ? '#EEF2FF'
-                  : isLearned
-                  ? '#ECFDF5'
-                  : 'var(--color-surface-muted)',
-                color: isCurrent
-                  ? 'var(--color-primary)'
-                  : isLearned
-                  ? '#065F46'
-                  : 'var(--color-text-secondary)',
-                transform: isCurrent ? 'scale(1.08)' : 'none',
-                boxShadow: isCurrent ? '0 2px 6px rgba(79, 70, 229, 0.2)' : 'none',
-                transition: 'all 0.15s ease',
-                flexShrink: 0,
+                gap: '5px',
+                backgroundColor: '#ECFDF5',
+                color: '#047857',
+                border: '1px solid #A7F3D0',
+                padding: '4px 12px',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
               }}
-              title={`Sentence ${idx + 1}: ${isLearned ? 'Learned' : 'Not Learned'}`}
             >
-              {isLearned && <CheckCircle size={12} color="#059669" />}
-              <span>{idx + 1}</span>
-            </button>
-          );
-        })}
+              <CheckCircle size={13} color="#059669" />
+              <span>
+                {lesson.learnedCount} / {sentences.length} LEARNED
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {/* Progress Track & Fill */}
+        <div
+          style={{
+            height: '7px',
+            backgroundColor: '#E2E8F0',
+            borderRadius: '9999px',
+            overflow: 'hidden',
+          }}
+          role="progressbar"
+          aria-valuenow={currentIndex + 1}
+          aria-valuemin={1}
+          aria-valuemax={sentences.length}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: `${Math.min(100, Math.round(((currentIndex + 1) / sentences.length) * 100))}%`,
+              backgroundColor: '#059669',
+              borderRadius: '9999px',
+              transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          />
+        </div>
+
+        {/* Numbered Lesson Navigation Buttons (Horizontally Scrollable) */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center',
+            overflowX: 'auto',
+            padding: '2px 2px 6px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {sentences.map((s, idx) => {
+            const isCurrent = idx === currentIndex;
+            const isLearned = s.status === 'LEARNED';
+
+            let btnBg = '#FFFFFF';
+            let btnColor = '#64748B';
+            let btnBorder = '1px solid #E2E8F0';
+            let boxShadow = '0 1px 2px rgba(0,0,0,0.03)';
+
+            if (isCurrent) {
+              btnBg = '#059669';
+              btnColor = '#FFFFFF';
+              btnBorder = '2px solid #047857';
+              boxShadow = '0 3px 8px rgba(5, 150, 105, 0.3)';
+            } else if (isLearned) {
+              btnBg = '#ECFDF5';
+              btnColor = '#047857';
+              btnBorder = '1px solid #A7F3D0';
+            }
+
+            return (
+              <button
+                key={s.id || idx}
+                type="button"
+                onClick={() => setCurrentIndex(idx)}
+                style={{
+                  minWidth: '36px',
+                  height: '36px',
+                  padding: '0 6px',
+                  borderRadius: '10px',
+                  fontSize: '0.82rem',
+                  fontWeight: isCurrent ? 800 : isLearned ? 700 : 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '3px',
+                  cursor: 'pointer',
+                  backgroundColor: btnBg,
+                  color: btnColor,
+                  border: btnBorder,
+                  boxShadow,
+                  transform: isCurrent ? 'scale(1.05)' : 'none',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0,
+                }}
+                title={`Sentence ${idx + 1}: ${isLearned ? 'Learned' : 'Incomplete'}`}
+                aria-label={`Go to sentence ${idx + 1}`}
+              >
+                {isLearned && !isCurrent && <CheckCircle size={11} color="#059669" />}
+                <span>{idx + 1}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Alert banner when reached the end with skipped sentences */}
@@ -386,13 +506,13 @@ export const DailyLessonPage: React.FC = () => {
           style={{
             backgroundColor: '#FFFBEB',
             border: '1px solid #FDE68A',
-            borderRadius: 'var(--radius-md)',
+            borderRadius: '16px',
             padding: '12px 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '12px',
-            boxShadow: 'var(--shadow-sm)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -417,6 +537,7 @@ export const DailyLessonPage: React.FC = () => {
               border: '1px solid #FDE68A',
               padding: '6px 12px',
               fontSize: '0.8rem',
+              borderRadius: '8px',
               whiteSpace: 'nowrap',
             }}
           >
@@ -425,249 +546,306 @@ export const DailyLessonPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Flashcard */}
+      {/* ========================================================
+          6. Main Lesson Card
+         ======================================================== */}
       {currentSentence && (
         <div
-          className="card"
           style={{
-            minHeight: '340px',
-            borderRadius: 'var(--radius-xl)',
-            padding: '32px 24px',
+            backgroundColor: '#FFFFFF',
+            borderRadius: '24px',
+            border: currentSentence.status === 'LEARNED' ? '1.5px solid #A7F3D0' : '1px solid #E2E8F0',
+            boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
+            padding: '28px 24px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxShadow: 'var(--shadow-md)',
-            position: 'relative',
-            border: currentSentence.status === 'LEARNED'
-              ? '2px solid #10B981'
-              : '1px solid var(--color-border)',
-            backgroundColor: '#ffffff',
+            gap: '20px',
             transition: 'border-color 0.2s ease',
           }}
         >
-          {/* Top badges & favorite */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* A. Category and Difficulty Row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               {currentSentence.category && (
-                <span className="badge" style={{ backgroundColor: 'var(--color-surface-muted)', color: 'var(--color-text-secondary)' }}>
+                <span
+                  style={{
+                    backgroundColor: '#F1F5F9',
+                    color: '#475569',
+                    border: '1px solid #E2E8F0',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    padding: '4px 10px',
+                    borderRadius: '9999px',
+                  }}
+                >
                   {currentSentence.category.name}
                 </span>
               )}
-              <span className={`badge badge-${currentSentence.difficulty.toLowerCase()}`}>
+
+              <span
+                style={{
+                  ...getDifficultyBadgeStyle(currentSentence.difficulty),
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  padding: '4px 10px',
+                  borderRadius: '9999px',
+                }}
+              >
                 {currentSentence.difficulty}
               </span>
-              {currentSentence.status === 'LEARNED' && (
-                <span
-                  className="badge"
-                  style={{
-                    backgroundColor: '#ECFDF5',
-                    color: '#059669',
-                    border: '1px solid #A7F3D0',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <CheckCircle size={12} />
-                  Learned
-                </span>
-              )}
             </div>
 
+            {/* Bookmark button aligned to the right */}
             <button
               onClick={() => toggleFavMutation.mutate(currentSentence.sentenceId)}
-              className="btn-icon btn-ghost"
-              title={currentSentence.isFavorite ? 'Remove from favorites' : 'Save to favorites'}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: currentSentence.isFavorite ? '#059669' : '#94A3B8',
+                transition: 'all 0.15s ease',
+              }}
+              title={currentSentence.isFavorite ? 'Remove from saved' : 'Save word & sentence'}
+              aria-label={currentSentence.isFavorite ? 'Remove bookmark' : 'Bookmark this sentence'}
             >
               <Bookmark
                 size={22}
-                fill={currentSentence.isFavorite ? '#4F46E5' : 'none'}
-                color={currentSentence.isFavorite ? '#4F46E5' : 'var(--color-text-muted)'}
+                fill={currentSentence.isFavorite ? '#059669' : 'none'}
+                color={currentSentence.isFavorite ? '#059669' : '#94A3B8'}
               />
             </button>
           </div>
 
-          {/* Core Word & Sentence Presentation */}
-          <div style={{ margin: '16px 0' }}>
-            {/* New Word Feature Card */}
-            {currentSentence.word && (
-              <div
+          {/* B. New Word Section */}
+          {currentSentence.word && (
+            <div
+              style={{
+                backgroundColor: '#ECFDF5',
+                borderRadius: '16px',
+                border: '1px solid #D1FAE5',
+                padding: '22px 18px',
+                textAlign: 'center',
+              }}
+            >
+              <span
                 style={{
-                  backgroundColor: 'var(--color-surface-muted)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '20px 16px',
-                  textAlign: 'center',
-                  marginBottom: '20px',
-                  border: '1px solid var(--color-border)',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    color: 'var(--color-primary)',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    backgroundColor: '#EEF2FF',
-                    padding: '3px 10px',
-                    borderRadius: 'var(--radius-full)',
-                    display: 'inline-block',
-                    marginBottom: '8px',
-                  }}
-                >
-                  New Word to Learn
-                </span>
-
-                <div
-                  style={{
-                    fontSize: '2rem',
-                    fontWeight: 850,
-                    color: 'var(--color-text-main)',
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {currentSentence.word}
-                </div>
-
-                <div
-                  className="font-ml"
-                  style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 700,
-                    color: 'var(--color-primary)',
-                    marginTop: '6px',
-                  }}
-                >
-                  {currentSentence.wordMeaning}
-                </div>
-
-                <button
-                  onClick={handlePlayWordAudio}
-                  className="btn btn-sm btn-subtle"
-                  style={{
-                    borderRadius: 'var(--radius-full)',
-                    padding: '6px 14px',
-                    margin: '12px auto 0',
-                    fontSize: '0.82rem',
-                  }}
-                >
-                  <Volume2
-                    size={16}
-                    color="var(--color-primary)"
-                    className={isPlayingWordAudio ? 'pulse' : ''}
-                  />
-                  <span>{isPlayingWordAudio ? 'Playing...' : 'Pronounce Word'}</span>
-                </button>
-              </div>
-            )}
-
-            {/* Context Sentence Section */}
-            <div style={{ textAlign: 'center', padding: '0 8px' }}>
-              <div
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: 'var(--color-text-muted)',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  color: '#059669',
+                  letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
+                  backgroundColor: '#FFFFFF',
+                  padding: '3px 12px',
+                  borderRadius: '9999px',
+                  display: 'inline-block',
                   marginBottom: '10px',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
                 }}
               >
-                Usage in Sentence
-              </div>
+                NEW WORD TO LEARN
+              </span>
 
-              {/* English Sentence */}
+              {/* English word - Most prominent element */}
               <div
                 style={{
-                  fontSize: '1.35rem',
-                  fontWeight: 700,
-                  color: 'var(--color-text-main)',
-                  lineHeight: 1.45,
-                  marginBottom: '14px',
+                  fontSize: '2.1rem',
+                  fontWeight: 800,
+                  color: '#0F172A',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.2,
                 }}
               >
-                {renderSentenceWithHighlight(currentSentence.englishText, currentSentence.word)}
+                {currentSentence.word}
               </div>
 
-              {/* Sentence Audio Button */}
-              <button
-                onClick={handlePlayAudio}
-                className="btn btn-subtle"
-                style={{
-                  borderRadius: 'var(--radius-full)',
-                  padding: '6px 16px',
-                  margin: '0 auto 16px',
-                  fontSize: '0.85rem',
-                }}
-              >
-                <Volume2
-                  size={18}
-                  color="var(--color-primary)"
-                  className={isPlayingAudio ? 'pulse' : ''}
-                />
-                <span>{isPlayingAudio ? 'Playing...' : 'Listen to Sentence'}</span>
-              </button>
-
-              {/* Divider */}
-              <div style={{ height: '1px', backgroundColor: 'var(--color-border)', width: '60%', margin: '0 auto 16px' }} />
-
-              {/* Malayalam Translation */}
+              {/* Malayalam meaning immediately below */}
               <div
                 className="font-ml"
                 style={{
-                  fontSize: '1.15rem',
-                  fontWeight: 600,
-                  color: 'var(--color-primary-dark)',
-                  lineHeight: 1.6,
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color: '#047857',
+                  marginTop: '4px',
+                  marginBottom: '14px',
                 }}
               >
-                {currentSentence.malayalamMeaning}
+                {currentSentence.wordMeaning}
               </div>
 
-              {/* Optional usage example */}
-              {currentSentence.usageExample && (
-                <div
-                  style={{
-                    marginTop: '16px',
-                    padding: '10px 14px',
-                    backgroundColor: 'var(--color-surface-muted)',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '0.85rem',
-                    color: 'var(--color-text-secondary)',
-                    fontStyle: 'italic',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span style={{ fontWeight: 600, fontStyle: 'normal' }}>Context Tip: </span>
-                  "{currentSentence.usageExample}"
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Learned Status Stamp */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            {currentSentence.status === 'LEARNED' ? (
-              <div
+              {/* Pronounce Word button */}
+              <button
+                type="button"
+                onClick={handlePlayWordAudio}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
+                  backgroundColor: '#FFFFFF',
                   color: '#059669',
+                  border: '1.5px solid #059669',
+                  borderRadius: '9999px',
+                  padding: '7px 18px',
+                  fontSize: '0.85rem',
                   fontWeight: 700,
-                  fontSize: '0.9rem',
-                  backgroundColor: '#ECFDF5',
-                  padding: '6px 16px',
-                  borderRadius: 'var(--radius-full)',
-                  border: '1px solid #A7F3D0',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(5, 150, 105, 0.1)',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <CheckCircle size={18} />
-                <span>Marked as Learned</span>
+                <Volume2
+                  size={16}
+                  color="#059669"
+                  className={isPlayingWordAudio ? 'pulse' : ''}
+                />
+                <span>{isPlayingWordAudio ? 'Playing...' : 'Pronounce Word'}</span>
+              </button>
+            </div>
+          )}
+
+          {/* C. Usage in Sentence */}
+          <div style={{ textAlign: 'center', padding: '0 4px' }}>
+            <div
+              style={{
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: '#64748B',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                marginBottom: '12px',
+              }}
+            >
+              USAGE IN SENTENCE
+            </div>
+
+            {/* Sentence with vocabulary word highlighted */}
+            <div
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: '#0F172A',
+                lineHeight: 1.55,
+                marginBottom: '14px',
+              }}
+            >
+              {renderSentenceWithHighlight(currentSentence.englishText, currentSentence.word)}
+            </div>
+
+            {/* Listen to Sentence button */}
+            <button
+              type="button"
+              onClick={handlePlayAudio}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: '#F1F5F9',
+                color: '#0F172A',
+                border: '1px solid #CBD5E1',
+                borderRadius: '9999px',
+                padding: '7px 18px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Volume2
+                size={17}
+                color="#059669"
+                className={isPlayingAudio ? 'pulse' : ''}
+              />
+              <span>{isPlayingAudio ? 'Playing...' : 'Listen to Sentence'}</span>
+            </button>
+          </div>
+
+          {/* D. Malayalam Translation (Soft warm-yellow background) */}
+          <div
+            style={{
+              backgroundColor: '#FEFCE8',
+              borderRadius: '16px',
+              border: '1px solid #FEF08A',
+              padding: '16px 18px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+              <Languages size={15} color="#B45309" />
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  color: '#B45309',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                MALAYALAM TRANSLATION
+              </span>
+            </div>
+            <div
+              className="font-ml"
+              style={{
+                fontSize: '1.15rem',
+                fontWeight: 600,
+                color: '#14532D',
+                lineHeight: 1.65,
+              }}
+            >
+              {currentSentence.malayalamMeaning}
+            </div>
+          </div>
+
+          {/* E. Context Tip (Subtle light-blue background) */}
+          {currentSentence.usageExample && (
+            <div
+              style={{
+                backgroundColor: '#F0F9FF',
+                borderRadius: '16px',
+                border: '1px solid #BAE6FD',
+                padding: '14px 18px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+              }}
+            >
+              <Lightbulb size={18} color="#0284C7" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '0.88rem', color: '#0369A1', lineHeight: 1.5 }}>
+                <span style={{ fontWeight: 700 }}>Context Tip: </span>
+                <span style={{ fontStyle: 'italic' }}>"{currentSentence.usageExample}"</span>
               </div>
+            </div>
+          )}
+
+          {/* F. Learning Instruction */}
+          <div style={{ textAlign: 'center', paddingTop: '4px' }}>
+            {currentSentence.status === 'LEARNED' ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: '#ECFDF5',
+                  color: '#059669',
+                  border: '1px solid #A7F3D0',
+                  padding: '5px 14px',
+                  borderRadius: '9999px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                }}
+              >
+                <CheckCircle size={14} color="#059669" />
+                <span>Marked as Learned</span>
+              </span>
             ) : (
-              <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+              <span style={{ color: '#64748B', fontSize: '0.85rem', fontWeight: 500 }}>
                 Tap 'Mark as Learned' when ready
               </span>
             )}
@@ -675,25 +853,60 @@ export const DailyLessonPage: React.FC = () => {
         </div>
       )}
 
-      {/* Navigation & Action Controls */}
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      {/* ========================================================
+          7. Bottom Learning Controls
+         ======================================================== */}
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        {/* Previous sentence button */}
         <button
+          type="button"
           onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
           disabled={currentIndex === 0}
-          className="btn btn-secondary"
-          style={{ width: '48px', height: '48px', padding: 0, borderRadius: 'var(--radius-md)' }}
+          style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '14px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            color: currentIndex === 0 ? '#94A3B8' : '#334155',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: currentIndex === 0 ? 'not-allowed' : 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'all 0.15s ease',
+            flexShrink: 0,
+          }}
           title="Previous Sentence"
+          aria-label="Previous sentence"
         >
           <ChevronLeft size={24} />
         </button>
 
+        {/* Main Action Button */}
         {!isPastLesson && currentSentence?.status !== 'LEARNED' ? (
           <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
             <button
+              type="button"
               onClick={handleMarkLearned}
               disabled={markLearnedMutation.isPending}
-              className="btn btn-primary btn-lg"
-              style={{ flex: 1 }}
+              style={{
+                flex: 1,
+                minHeight: '52px',
+                borderRadius: '14px',
+                backgroundColor: '#059669',
+                color: '#FFFFFF',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '1rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: markLearnedMutation.isPending ? 'wait' : 'pointer',
+                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                transition: 'all 0.15s ease',
+              }}
             >
               <CheckCircle size={20} />
               <span>{markLearnedMutation.isPending ? 'Saving...' : 'Mark as Learned'}</span>
@@ -703,14 +916,20 @@ export const DailyLessonPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleReviewGoal}
-                className="btn btn-secondary btn-lg"
                 style={{
                   padding: '0 16px',
+                  minHeight: '52px',
+                  borderRadius: '14px',
+                  backgroundColor: '#FFFFFF',
+                  color: '#0F172A',
+                  border: '1px solid #CBD5E1',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                 }}
                 title="Review Goal"
               >
@@ -720,6 +939,7 @@ export const DailyLessonPage: React.FC = () => {
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => {
               if (currentIndex < sentences.length - 1) {
                 setCurrentIndex((prev) => prev + 1);
@@ -727,8 +947,23 @@ export const DailyLessonPage: React.FC = () => {
                 handleReviewGoal();
               }
             }}
-            className="btn btn-primary btn-block btn-lg"
-            style={{ flex: 1 }}
+            style={{
+              flex: 1,
+              minHeight: '52px',
+              borderRadius: '14px',
+              backgroundColor: '#059669',
+              color: '#FFFFFF',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: '1rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+              transition: 'all 0.15s ease',
+            }}
           >
             {currentIndex < sentences.length - 1 ? (
               <>
@@ -744,23 +979,39 @@ export const DailyLessonPage: React.FC = () => {
           </button>
         )}
 
+        {/* Next sentence button */}
         <button
+          type="button"
           onClick={() => setCurrentIndex((prev) => Math.min(sentences.length - 1, prev + 1))}
           disabled={currentIndex === sentences.length - 1}
-          className="btn btn-secondary"
-          style={{ width: '48px', height: '48px', padding: 0, borderRadius: 'var(--radius-md)' }}
+          style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '14px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            color: currentIndex === sentences.length - 1 ? '#94A3B8' : '#334155',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: currentIndex === sentences.length - 1 ? 'not-allowed' : 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'all 0.15s ease',
+            flexShrink: 0,
+          }}
           title="Next Sentence"
+          aria-label="Next sentence"
         >
           <ChevronRight size={24} />
         </button>
       </div>
 
       {/* ========================================================
-          Target Completion Dialog (Section 8 of Requirements)
+          Target Completion Dialog
          ======================================================== */}
       {showCompletionModal && (
         <div className="modal-overlay">
-          <div className="modal-card">
+          <div className="modal-card" style={{ borderRadius: '24px', padding: '28px 24px' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowCompletionModal(false)}
@@ -776,8 +1027,8 @@ export const DailyLessonPage: React.FC = () => {
                   width: '64px',
                   height: '64px',
                   borderRadius: '50%',
-                  backgroundColor: 'var(--color-primary-light)',
-                  color: 'var(--color-primary)',
+                  backgroundColor: '#ECFDF5',
+                  color: '#059669',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -787,36 +1038,36 @@ export const DailyLessonPage: React.FC = () => {
                 <Sparkles size={32} />
               </div>
 
-              <h2 style={{ fontSize: '1.45rem', fontWeight: 800 }}>
+              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A' }}>
                 Today's learning target completed!
               </h2>
-              <p style={{ color: 'var(--color-text-secondary)', marginTop: '8px', lineHeight: 1.5 }}>
+              <p style={{ color: '#64748B', marginTop: '8px', lineHeight: 1.5 }}>
                 Great job! You've completed your daily English-learning goal.
               </p>
             </div>
 
-            {/* Section 8: 30-Sentence Limit Check */}
+            {/* 30-Sentence Limit Check */}
             {lesson.learnedCount >= 30 ? (
               <div
                 style={{
-                  backgroundColor: 'var(--color-primary-subtle)',
+                  backgroundColor: '#ECFDF5',
                   padding: '16px',
-                  borderRadius: 'var(--radius-md)',
+                  borderRadius: '16px',
                   marginBottom: '20px',
                   textAlign: 'center',
                   border: '1px solid #A7F3D0',
                 }}
               >
-                <p style={{ fontWeight: 700, color: 'var(--color-primary-dark)', fontSize: '0.95rem' }}>
+                <p style={{ fontWeight: 700, color: '#047857', fontSize: '0.95rem' }}>
                   You've reached today's maximum of 30 sentences. Great work!
                 </p>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '4px' }}>
                   You can revise previous lessons or take a quiz to reinforce retention.
                 </p>
               </div>
             ) : (
               <div>
-                <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '12px', textAlign: 'center' }}>
+                <p style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A', marginBottom: '12px', textAlign: 'center' }}>
                   Would you like to learn more sentences today?
                 </p>
 
@@ -833,18 +1084,19 @@ export const DailyLessonPage: React.FC = () => {
                         style={{
                           justifyContent: 'space-between',
                           padding: '16px',
-                          border: '1px solid var(--color-border)',
+                          border: '1px solid #E2E8F0',
+                          borderRadius: '16px',
                         }}
                       >
                         <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--color-text-main)' }}>
+                          <div style={{ fontWeight: 700, color: '#0F172A' }}>
                             Increase target to {nextTarget} sentences
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
                             Adds {nextTarget - lesson.targetCount} more new sentences for today
                           </div>
                         </div>
-                        <ArrowRight size={18} color="var(--color-primary)" />
+                        <ArrowRight size={18} color="#059669" />
                       </button>
                     ))}
                 </div>
@@ -857,6 +1109,7 @@ export const DailyLessonPage: React.FC = () => {
                 type="button"
                 onClick={() => navigate('/app/quiz')}
                 className="btn btn-primary btn-block"
+                style={{ backgroundColor: '#059669', borderRadius: '14px', fontWeight: 700 }}
               >
                 <span>Take Retention Quiz</span>
                 <ArrowRight size={18} />
@@ -865,6 +1118,7 @@ export const DailyLessonPage: React.FC = () => {
                 type="button"
                 onClick={() => navigate('/app')}
                 className="btn btn-ghost btn-block"
+                style={{ borderRadius: '14px' }}
               >
                 Return to Home
               </button>
@@ -878,7 +1132,7 @@ export const DailyLessonPage: React.FC = () => {
          ======================================================== */}
       {showSkippedModal && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '480px' }}>
+          <div className="modal-card" style={{ maxWidth: '480px', borderRadius: '24px', padding: '28px 24px' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowSkippedModal(false)}
@@ -906,10 +1160,10 @@ export const DailyLessonPage: React.FC = () => {
                 <AlertCircle size={32} />
               </div>
 
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-main)' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A' }}>
                 Some Sentences Were Skipped!
               </h2>
-              <p style={{ color: 'var(--color-text-secondary)', marginTop: '8px', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              <p style={{ color: '#64748B', marginTop: '8px', fontSize: '0.9rem', lineHeight: 1.5 }}>
                 You have learned <strong>{lesson.learnedCount} of {lesson.targetCount}</strong> sentences. You still have <strong>{unlearnedCount} skipped sentence{unlearnedCount > 1 ? 's' : ''}</strong> that must be marked as learned to complete today's goal.
               </p>
             </div>
@@ -921,7 +1175,7 @@ export const DailyLessonPage: React.FC = () => {
                   fontSize: '0.78rem',
                   fontWeight: 700,
                   textTransform: 'uppercase',
-                  color: 'var(--color-text-muted)',
+                  color: '#64748B',
                   letterSpacing: '0.04em',
                   marginBottom: '8px',
                 }}
@@ -953,7 +1207,7 @@ export const DailyLessonPage: React.FC = () => {
                       padding: '10px 14px',
                       backgroundColor: '#FFFBEB',
                       border: '1px solid #FDE68A',
-                      borderRadius: 'var(--radius-md)',
+                      borderRadius: '14px',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
@@ -977,9 +1231,9 @@ export const DailyLessonPage: React.FC = () => {
                           Not Learned
                         </span>
                       </div>
-                      <div style={{ fontWeight: 750, fontSize: '0.92rem', color: 'var(--color-text-main)', marginTop: '3px' }}>
+                      <div style={{ fontWeight: 750, fontSize: '0.92rem', color: '#0F172A', marginTop: '3px' }}>
                         {item.word}{' '}
-                        <span className="font-ml" style={{ fontWeight: 600, color: 'var(--color-primary-dark)', fontSize: '0.82rem' }}>
+                        <span className="font-ml" style={{ fontWeight: 600, color: '#047857', fontSize: '0.82rem' }}>
                           ({item.wordMeaning})
                         </span>
                       </div>
@@ -989,11 +1243,12 @@ export const DailyLessonPage: React.FC = () => {
                       type="button"
                       className="btn btn-sm"
                       style={{
-                        backgroundColor: 'var(--color-primary)',
+                        backgroundColor: '#059669',
                         color: '#ffffff',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        padding: '4px 10px',
+                        padding: '5px 12px',
+                        borderRadius: '8px',
                         flexShrink: 0,
                       }}
                     >
@@ -1014,7 +1269,15 @@ export const DailyLessonPage: React.FC = () => {
                     setShowSkippedModal(false);
                   }}
                   className="btn btn-primary btn-block"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  style={{
+                    backgroundColor: '#059669',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: 700,
+                  }}
                 >
                   <RotateCcw size={16} />
                   <span>Go to Sentence {firstUnlearnedIndex + 1}</span>
@@ -1024,6 +1287,7 @@ export const DailyLessonPage: React.FC = () => {
                 type="button"
                 onClick={() => setShowSkippedModal(false)}
                 className="btn btn-ghost btn-block"
+                style={{ borderRadius: '14px' }}
               >
                 Close & Continue Reviewing
               </button>

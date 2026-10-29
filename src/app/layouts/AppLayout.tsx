@@ -87,27 +87,30 @@ export const AppLayout: React.FC = () => {
         {/* Right side items */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Streak Badge */}
-          {summary !== undefined && (
-            <div
-              onClick={() => navigate('/app/progress')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '6px 12px',
-                backgroundColor: summary.currentStreak > 0 ? '#FEF3C7' : 'var(--color-surface-muted)',
-                color: summary.currentStreak > 0 ? '#B45309' : 'var(--color-text-muted)',
-                borderRadius: 'var(--radius-full)',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-              title="Daily Learning Streak"
-            >
-              <Flame size={16} fill={summary.currentStreak > 0 ? '#F59E0B' : 'none'} color="#F59E0B" />
-              <span>{summary.currentStreak}d</span>
-            </div>
-          )}
+          <div
+            onClick={() => navigate('/app/progress')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              backgroundColor: (summary?.currentStreak ?? 0) > 0 ? '#FEF3C7' : '#F1F5F9',
+              color: (summary?.currentStreak ?? 0) > 0 ? '#B45309' : '#64748B',
+              borderRadius: '9999px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: '1px solid ' + ((summary?.currentStreak ?? 0) > 0 ? '#FDE68A' : '#E2E8F0'),
+            }}
+            title="Daily Learning Streak"
+          >
+            <Flame
+              size={16}
+              fill={(summary?.currentStreak ?? 0) > 0 ? '#F59E0B' : 'none'}
+              color="#F59E0B"
+            />
+            <span>{summary?.currentStreak ?? 0}d</span>
+          </div>
 
           {/* Settings / Preferences */}
           <button
@@ -216,8 +219,8 @@ export const AppLayout: React.FC = () => {
                 gap: '4px',
                 flex: 1,
                 height: '100%',
-                color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                fontWeight: isActive ? 700 : 500,
+                color: isActive ? '#059669' : '#64748B',
+                fontWeight: isActive ? 750 : 550,
                 fontSize: '0.75rem',
                 transition: 'color 0.15s ease',
               }}
